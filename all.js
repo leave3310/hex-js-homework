@@ -8,16 +8,45 @@ axios
   )
   .then(function (response) {
     info = response.data;
-    updata();
+    info.forEach(function(item){
+      item.process = parseInt(item.process.substring(0,item.process.length-1));
+      item.id = parseInt(item.id);
+    })
   });
+
+ 
+
+function updateList(e){  
+  let select = e.target.value;
+  
+  sort(select);
+  
+  let newArray = slice(select);
+  
+  liShow(select);
+  
+  barChart(newArray,5);
+}
+
+function liShow(select){
+  let str = "";
+  if(select === 'id'){
+    info.forEach(function(item){
+      return str+='<li>編號 ID ' + item.id + ' 為 ' +item.name + ' ，他的特訓班完成度是 ' + item.process + ' %</li>';
+    })
+  }else if(select === 'process'){
+    info.forEach(function(item, index){
+      return str+='<li>第 '+ (index+1) + '名是 '+item.name+' ，他的特訓班完成度是 '+item.process+' %</li>';
+    })
+  }
+  list.innerHTML = str;
+}
 
 function updata(){
   let newArray = [];
-  info.forEach(function(item){
-    item.process = parseInt(item.process.substring(0,item.process.length-1));
-  })
 
-  sort();
+  sort("process");
+
   info.forEach(function(item){
     let person = [];
     person.push(item.name, item.process)
@@ -79,11 +108,33 @@ function gaugeChart(group){
   })
 }
 
-function sort(){
-  info.sort(function(a,b){
-    return a.process < b.process;
+function sort(value){
+  
+  
+  if(value === "id"){
+    console.log('b');
+    info.sort(function(a,b){
+      return a.id > b.id;
+    })
+  }else if(value === "process"){    
+    console.log('a');
+    info.sort(function(a,b){
+      return a.process < b.process;
+    })
+  }
+  
+}
+
+function slice(select){
+  let newArray = [];
+  info.forEach(function(item){
+    let person = [];
+    person.push(item.name, `item.${select}`)
+    newArray.push(person)
   })
+  return newArray;
 }
 
 
 
+num.addEventListener('change', updateList)
