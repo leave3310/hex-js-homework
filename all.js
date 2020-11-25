@@ -1,6 +1,7 @@
 var info;
-var list = document.querySelector('.list');
-var num = document.querySelector('.choose');
+var list = document.querySelector(".list");
+var num = document.querySelector(".choose");
+var data = { CompletetionRate: ["完成率"], name: [] };
 
 axios
   .get(
@@ -8,133 +9,119 @@ axios
   )
   .then(function (response) {
     info = response.data;
-    info.forEach(function(item){
-      item.process = parseInt(item.process.substring(0,item.process.length-1));
-      item.id = parseInt(item.id);
-    })
+    info.forEach(function (item) {
+      item.process = parseInt(
+        item.process.substring(0, item.process.length - 1) //轉成int
+      );
+      item.id = parseInt(item.id); //轉成int
+    });
   });
 
- 
-
-function updateList(e){  
-  let select = e.target.value;
+function updateList(e) {
+  let select = e.target.value; // 看select選到甚麼值
   
-  sort(select);
+  sort(select); //依照select選到的值做排序
   
-  let newArray = slice(select);
+  liShow(select); //讓li展現出來
   
-  liShow(select);
-  
-  barChart(newArray,5);
+  barChart(); //展現圖表的部分
 }
 
-function liShow(select){
-  let str = "";
-  if(select === 'id'){
-    info.forEach(function(item){
-      return str+='<li>編號 ID ' + item.id + ' 為 ' +item.name + ' ，他的特訓班完成度是 ' + item.process + ' %</li>';
-    })
-  }else if(select === 'process'){
-    info.forEach(function(item, index){
-      return str+='<li>第 '+ (index+1) + '名是 '+item.name+' ，他的特訓班完成度是 '+item.process+' %</li>';
-    })
+function sort(value) {
+  data = { CompletetionRate: ["完成率"], name: [] };
+  if (value === "id") {
+    info.sort(function (a, b) {
+      return a.id > b.id;
+    });
+  } else if (value === "process") {
+    
+    info.sort(function (a, b) {
+      return a.process < b.process;
+    });
   }
+  info.forEach(function (item) {
+    data.CompletetionRate.push(parseFloat(item.process) / 100);
+    data.name.push(item.name);
+  });
+  
+}
+
+function liShow(select) {
+  let str = "";
+  if (select === "id") {
+    info.forEach(function (item) {
+      return (str +=
+        "<li>編號 ID " +
+        item.id +
+        " 為 " +
+        item.name +
+        " ，他的特訓班完成度是 " +
+        item.process +
+        " %</li>");
+    });
+  } else if (select === "process") {
+    info.forEach(function (item, index) {
+      return (str +=
+        "<li>第 " +
+        (index + 1) +
+        "名是 " +
+        item.name +
+        " ，他的特訓班完成度是 " +
+        item.process +
+        " %</li>");
+    });
+  }
+  
   list.innerHTML = str;
 }
 
-function updata(){
-  let newArray = [];
-
-  sort("process");
-
-  info.forEach(function(item){
-    let person = [];
-    person.push(item.name, item.process)
-
-    newArray.push(person)
-  })
-  
-  let groupOne, groupTwo, groupThree = [];
-  groupOne = newArray.slice(0,9);
-  groupTwo = newArray.slice(10,19);
-  groupThree = newArray.slice(20,29);
-  
-  barChart(groupOne,2);
-  barChart(groupTwo,3);
-  barChart(groupThree,4);
-  gaugeChart(groupOne[0]);
-}
-
-function barChart(group, index){
-  
+function barChart() {
   let chart = c3.generate({
-    bindto: `#chart${index}`,
-    data:{
-      columns: group,
-      type: 'bar'
+    bindto: "#chartBar",
+    data: {
+      columns: [[...data.CompletetionRate]],
+      type: "bar",
+      axes: {
+        "完成率": "y2",
+      },
     },
-    bar:{
-      width:{
-        ratio: 0.8
-      }
+    size: {
+      height: data.name.length*25, //調整圖表高度
+      
     },
-
-
-  })
-  
+    bar: {
+      width: {
+        ratio: 0.8,
+      },
+    },
+    axis: {
+      rotated: true, //轉成橫向
+      x: {
+        type: "category", // 左側 X 軸顯示
+        categories: data.name, //參賽姓名資料
+        label: {
+          text: "參賽者姓名",
+          position: "outer-center",
+        },
+      },
+      y: {
+        show: true, //下方 Y 軸顯示
+        categories: data.CompletionRate,
+        label: {
+          text: "完成率%",
+          position: "outer-middle", //名稱位置
+        },
+      },
+      y2: {
+        show: true, //上方 Y 軸顯示
+        categories: data.CompletionRate,
+        label: {
+          text: "完成率%",
+          position: "outer-middle", //名稱位置
+        },
+      },
+    },
+  });
 }
 
-function gaugeChart(group){
-
-  let chart = c3.generate({
-    data:{
-      columns: [
-        ['關卡進度',group[1]],
-        ['aa', 20]
-      ],
-      type: 'gauge',
-      onclick: function (d, i) { console.log("onclick", d, i); },
-      onmouseover: function (d, i) { console.log("onmouseover", d, i); },
-      onmouseout: function (d, i) { console.log("onmouseout", d, i); }
-    },
-    color: {
-      pattern: ['#FF0000', '#F97600', '#F6C600', '#60B044'], // the three color levels for the percentage values.
-      threshold: {
-          values: [30, 60, 90, 100]
-      }
-    },
-    
-
-  })
-}
-
-function sort(value){
-  
-  
-  if(value === "id"){
-    console.log('b');
-    info.sort(function(a,b){
-      return a.id > b.id;
-    })
-  }else if(value === "process"){    
-    console.log('a');
-    info.sort(function(a,b){
-      return a.process < b.process;
-    })
-  }
-  
-}
-
-function slice(select){
-  let newArray = [];
-  info.forEach(function(item){
-    let person = [];
-    person.push(item.name, `item.${select}`)
-    newArray.push(person)
-  })
-  return newArray;
-}
-
-
-
-num.addEventListener('change', updateList)
+num.addEventListener("change", updateList);
